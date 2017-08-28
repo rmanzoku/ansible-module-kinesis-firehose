@@ -1,0 +1,23 @@
+- hosts:
+    localhost
+  gather_facts: no
+  connection: local
+  tasks:
+    # - name: Delete
+    #   kinesis_firehose:
+    #     state: absent
+    #     name: example
+
+    - name: Create
+      kinesis_firehose:
+        state: present
+        name: example
+        stream_type: DirectPut
+        dest: Elasticsearch
+        role_arn: hoge
+        dest_arn: es-example
+        backup_mode: FailedDocumentsOnly
+        es_index_name: es-index
+        es_type_name: test
+        es_index_rotation_period: OneDay
+        s3_bucket: kinesis_log
