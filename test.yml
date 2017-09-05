@@ -14,10 +14,11 @@
         name: example
         stream_type: DirectPut
         dest: Elasticsearch
-        role_arn: hoge
-        dest_arn: es-example
+        role_arn: "arn:aws:iam::111111111111:role/firehose_delivery_role"
+        dest_arn: "arn:aws:es:ap-northeast-1:111111111:domain/es"
         backup_mode: FailedDocumentsOnly
-        es_index_name: es-index
+        es_index_name: es-index1
         es_type_name: test
         es_index_rotation_period: OneDay
-        s3_bucket: kinesis_log
+        es_buffering_mb: 10
+        s3_bucket_arn: "arn:aws:s3:::backup"

@@ -55,11 +55,11 @@ def main():
             es_type_name=dict(type='str', require=True),
             es_index_rotation_period=dict(default="NoRotation", type='str', require=False,
                                           choices=['NoRotation', 'OneHour', 'OneDay', 'OneWeek', 'OneMonth']),
-            es_buffering_second=dict(default=300, type='integer', require=False),
-            es_buffering_mb=dict(default=5, type='integer', require=False),
-            es_retry_second=dict(default=300, type='integer', require=False),
-            s3_bucket=dict(type='str', require=True),
-            s3_prefix=dict(type='str', require=False),
+            es_buffering_second=dict(default=300, type='int', require=False),
+            es_buffering_mb=dict(default=5, type='int', require=False),
+            es_retry_second=dict(default=300, type='int', require=False),
+            s3_bucket_arn=dict(type='str', require=True),
+            s3_prefix=dict(default="", type='str', require=False),
             s3_compression=dict(default="UNCOMPRESSED", type='str', require=False,
                                 choices=['UNCOMPRESSED', 'SNAPPY', 'ZIP', 'GZIP']),
         )
@@ -80,7 +80,7 @@ def main():
     es_buffering_second = module.params['es_buffering_second']
     es_buffering_mb = module.params['es_buffering_mb']
     es_retry_second = module.params['es_retry_second']
-    s3_bucket = module.params['s3_bucket']
+    s3_bucket_arn = module.params['s3_bucket_arn']
     s3_prefix = module.params['s3_prefix']
     s3_compression = module.params['s3_compression']
 
@@ -117,7 +117,7 @@ def main():
     # state == present
     s3_configuration = {
         "RoleARN": role_arn,
-        "BucketARN": s3_bucket,
+        "BucketARN": s3_bucket_arn,
         "Prefix": s3_prefix,
         "CompressionFormat": s3_compression
     }
