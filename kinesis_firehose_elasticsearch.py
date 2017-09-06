@@ -155,7 +155,7 @@ def main():
 
     except ClientError as ex:
         # Create delivery stream
-        if ex.response['Error']['Code'] != "ResourceNotFoundException":
+        if ex.response['Error']['Code'] == "ResourceNotFoundException":
             try:
                 conn.create_delivery_stream(
                     DeliveryStreamName=name,
