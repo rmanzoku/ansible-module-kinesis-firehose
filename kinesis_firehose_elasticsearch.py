@@ -3,10 +3,10 @@
 
 DOCUMENTATION = '''
 ---
-module: kinesis_firehose
-short_description: Manage a Kinesis Firehose.
+module: kinesis_firehose_elasticsearch
+short_description: Manage a Kinesis Firehose for Elasticsearch.
 description:
-    - Manage a Kinesis Firehose.
+    - Manage a Kinesis Firehose for Elasticsearch service.
 options:
   state:
     description: Create or Delete the Kinesis Firehose.
