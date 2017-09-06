@@ -36,10 +36,15 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, get_aws_connection_info
-
+import copy
 
 def main():
 
+    magic_string = {
+        'target': "Elasticsearch",
+        'describe': "ElasticsearchDestinationDescription",
+        'create': "ElasticsearchDestinationConfig"
+    }
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
@@ -51,13 +56,13 @@ def main():
             dest_arn=dict(type='str', require=True, aliases=['domain_arn']),
             backup_mode=dict(default="FailedDocumentsOnly", type='str',
                              choices=['FailedDocumentsOnly', 'AllDocuments']),
-            es_index_name=dict(type='str', require=True),
-            es_type_name=dict(type='str', require=True),
-            es_index_rotation_period=dict(default="NoRotation", type='str', require=False,
-                                          choices=['NoRotation', 'OneHour', 'OneDay', 'OneWeek', 'OneMonth']),
-            es_buffering_second=dict(default=300, type='int', require=False),
-            es_buffering_mb=dict(default=5, type='int', require=False),
-            es_retry_second=dict(default=300, type='int', require=False),
+            index_name=dict(type='str', require=True),
+            type_name=dict(type='str', require=True),
+            index_rotation_period=dict(default="NoRotation", type='str', require=False,
+                                       choices=['NoRotation', 'OneHour', 'OneDay', 'OneWeek', 'OneMonth']),
+            buffering_second=dict(default=300, type='int', require=False),
+            buffering_mb=dict(default=5, type='int', require=False),
+            retry_second=dict(default=300, type='int', require=False),
             s3_bucket_arn=dict(type='str', require=True),
             s3_prefix=dict(default="", type='str', require=False),
             s3_compression=dict(default="UNCOMPRESSED", type='str', require=False,
@@ -74,12 +79,12 @@ def main():
     role_arn = module.params['role_arn']
     dest_arn = module.params['dest_arn']
     backup_mode = module.params['backup_mode']
-    es_index_name = module.params['es_index_name']
-    es_type_name = module.params['es_type_name']
-    es_index_rotation_period = module.params['es_index_rotation_period']
-    es_buffering_second = module.params['es_buffering_second']
-    es_buffering_mb = module.params['es_buffering_mb']
-    es_retry_second = module.params['es_retry_second']
+    index_name = module.params['index_name']
+    type_name = module.params['type_name']
+    index_rotation_period = module.params['index_rotation_period']
+    buffering_second = module.params['buffering_second']
+    buffering_mb = module.params['buffering_mb']
+    retry_second = module.params['retry_second']
     s3_bucket_arn = module.params['s3_bucket_arn']
     s3_prefix = module.params['s3_prefix']
     s3_compression = module.params['s3_compression']
@@ -115,45 +120,91 @@ def main():
         module.exit_json(changed=changed)
 
     # state == present
-    s3_configuration = {
+    desired_s3_config = {
         "RoleARN": role_arn,
         "BucketARN": s3_bucket_arn,
         "Prefix": s3_prefix,
-        "CompressionFormat": s3_compression
+        "CompressionFormat": s3_compression,
+        "BufferingHints": {
+            "IntervalInSeconds": 300,
+            "SizeInMBs": 5
+        },
+        "CloudWatchLoggingOptions": {
+            "Enabled": False
+        },
+        "EncryptionConfiguration": {
+            "NoEncryptionConfig": "NoEncryption"
+        },
     }
 
-    if dest == "Elasticsearch":
-        elasticsearch_destination_configuration = {
-            "RoleARN": role_arn,
-            "DomainARN": dest_arn,
-            "IndexName": es_index_name,
-            "TypeName": es_type_name,
-            "IndexRotationPeriod": es_index_rotation_period,
-            "BufferingHints": {
-                "IntervalInSeconds": es_buffering_second,
-                "SizeInMBs": es_buffering_mb
-            },
-            "RetryOptions": {
-                "DurationInSeconds": es_retry_second
-            },
-            "S3BackupMode": backup_mode,
-            "S3Configuration": s3_configuration
-        }
+    desired_config = {
+        "RoleARN": role_arn,
+        "DomainARN": dest_arn,
+        "IndexName": index_name,
+        "TypeName": type_name,
+        "IndexRotationPeriod": index_rotation_period,
+        "BufferingHints": {
+            "IntervalInSeconds": buffering_second,
+            "SizeInMBs": buffering_mb
+        },
+        "RetryOptions": {
+            "DurationInSeconds": retry_second
+        },
+        "S3BackupMode": backup_mode,
+        "S3Configuration": desired_s3_config
+    }
+
+    try:
+        current = conn.describe_delivery_stream(
+            DeliveryStreamName=name
+        )
+
+    except ClientError as ex:
+        # Create delivery stream
+        if ex.response['Error']['Code'] != "ResourceNotFoundException":
+            try:
+                conn.create_delivery_stream(
+                    DeliveryStreamName=name,
+                    DeliveryStreamType=stream_type,
+                    ElasticsearchDestinationConfiguration=desired_config
+                )
+                module.exit_json(changed=True)
+            except ClientError as ex2:
+                module.fail_json(msg=ex2.response['Error']['Message'])
+
+    # Update
+    current_config = current['DeliveryStreamDescription']['Destinations'][0]['ElasticsearchDestinationDescription']
+
+    if current_config['S3BackupMode'] != desired_config['S3BackupMode']:
+        module.fail_json(msg="You cannot modify S3BackupMode")
+
+    current_config['S3Update'] = current_config.pop('S3DestinationDescription')
+    desired_config['S3Update'] = desired_config.pop('S3Configuration')
+
+    planned_config = copy.deepcopy(current_config)
+
+    for k in desired_config.keys():
+            planned_config[k] = desired_config[k]
+
+    if current_config == planned_config:
+
+        changed = False
+
+    else:
+        planned_config.pop('S3BackupMode')
 
         try:
-            conn.create_delivery_stream(
+            conn.update_destination(
                 DeliveryStreamName=name,
-                DeliveryStreamType=stream_type,
-                ElasticsearchDestinationConfiguration=elasticsearch_destination_configuration
+                CurrentDeliveryStreamVersionId=current['DeliveryStreamDescription']['VersionId'],
+                DestinationId=current['DeliveryStreamDescription']['Destinations'][0]['DestinationId'],
+                ElasticsearchDestinationUpdate=planned_config
             )
             changed = True
         except ClientError as ex:
-            if ex.response['Error']['Code'] == "ResourceInUseException":
-                pass
-            else:
-                module.fail_json(msg=ex.response['Error']['Message'])
+            module.fail_json(msg=ex.response['Error']['Message'])
 
-    module.exit_json(changed=True)
+    module.exit_json(changed=changed)
 
 
 if __name__ == '__main__':
