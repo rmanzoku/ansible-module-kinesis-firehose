@@ -34,24 +34,19 @@ try:
 except ImportError:
     HAS_BOTOCORE = False
 
+import copy
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, get_aws_connection_info
-import copy
+
 
 def main():
 
-    magic_string = {
-        'target': "Elasticsearch",
-        'describe': "ElasticsearchDestinationDescription",
-        'create': "ElasticsearchDestinationConfig"
-    }
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
             state=dict(type='str', default="present", choices=['present', 'absent']),
             name=dict(type='str', required=True),
             stream_type=dict(type='str', require=True, choices=['DirectPut']),
-            dest=dict(type='str', require=True, choices=['Elasticsearch']),
             role_arn=dict(type='str', require=True),
             dest_arn=dict(type='str', require=True, aliases=['domain_arn']),
             backup_mode=dict(default="FailedDocumentsOnly", type='str',
@@ -75,7 +70,6 @@ def main():
     state = module.params['state']
     name = module.params['name']
     stream_type = module.params['stream_type']
-    dest = module.params['dest']
     role_arn = module.params['role_arn']
     dest_arn = module.params['dest_arn']
     backup_mode = module.params['backup_mode']
@@ -187,7 +181,6 @@ def main():
             planned_config[k] = desired_config[k]
 
     if current_config == planned_config:
-
         changed = False
 
     else:
