@@ -44,24 +44,53 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            state=dict(type='str', default="present", choices=['present', 'absent']),
-            name=dict(type='str', required=True),
-            stream_type=dict(type='str', require=True, choices=['DirectPut']),
-            role_arn=dict(type='str', require=True),
-            dest_arn=dict(type='str', require=True, aliases=['domain_arn']),
-            backup_mode=dict(default="FailedDocumentsOnly", type='str',
-                             choices=['FailedDocumentsOnly', 'AllDocuments']),
-            index_name=dict(type='str', require=True),
-            type_name=dict(type='str', require=True),
-            index_rotation_period=dict(default="NoRotation", type='str', require=False,
-                                       choices=['NoRotation', 'OneHour', 'OneDay', 'OneWeek', 'OneMonth']),
-            buffering_second=dict(default=300, type='int', require=False),
-            buffering_mb=dict(default=5, type='int', require=False),
-            retry_second=dict(default=300, type='int', require=False),
-            s3_bucket_arn=dict(type='str', require=True),
-            s3_prefix=dict(default="", type='str', require=False),
-            s3_compression=dict(default="UNCOMPRESSED", type='str', require=False,
-                                choices=['UNCOMPRESSED', 'SNAPPY', 'ZIP', 'GZIP']),
+            state=dict
+            (type='str', default="present", choices=['present', 'absent']),
+
+            name=dict
+            (type='str', required=True),
+
+            stream_type=dict
+            (type='str', require=True, choices=['DirectPut']),
+
+            role_arn=dict
+            (type='str', require=True),
+
+            dest_arn=dict
+            (type='str', require=True, aliases=['domain_arn']),
+
+            backup_mode=dict
+            (default="FailedDocumentsOnly", type='str',
+             choices=['FailedDocumentsOnly', 'AllDocuments']),
+
+            index_name=dict
+            (type='str', require=True),
+
+            type_name=dict
+            (type='str', require=True),
+
+            index_rotation_period=dict
+            (default="NoRotation", type='str', require=False,
+             choices=['NoRotation', 'OneHour', 'OneDay', 'OneWeek', 'OneMonth']),
+
+            buffering_second=dict
+            (default=300, type='int', require=False),
+
+            buffering_mb=dict
+            (default=5, type='int', require=False),
+
+            retry_second=dict
+            (default=300, type='int', require=False),
+
+            s3_bucket_arn=dict
+            (type='str', require=True),
+
+            s3_prefix=dict
+            (default="", type='str', require=False),
+
+            s3_compression=dict
+            (default="UNCOMPRESSED", type='str', require=False,
+             choices=['UNCOMPRESSED', 'SNAPPY', 'ZIP', 'GZIP']),
         )
     )
 
