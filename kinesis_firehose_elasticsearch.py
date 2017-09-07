@@ -45,51 +45,53 @@ def main():
     argument_spec.update(
         dict(
             state=dict
-            (type='str', default="present", choices=['present', 'absent']),
+            (require=False, type='str', default="present",
+             choices=['present', 'absent']),
 
             name=dict
-            (type='str', required=True),
+            (require=True, type='str'),
 
             stream_type=dict
-            (type='str', require=True, choices=['DirectPut']),
+            (require=True, type='str',
+             choices=['DirectPut', 'KinesisStreamAsSource']),
 
             role_arn=dict
-            (type='str', require=True),
+            (require=True, type='str'),
 
             dest_arn=dict
-            (type='str', require=True, aliases=['domain_arn']),
-
-            backup_mode=dict
-            (default="FailedDocumentsOnly", type='str',
-             choices=['FailedDocumentsOnly', 'AllDocuments']),
+            (require=True, type='str'),
 
             index_name=dict
-            (type='str', require=True),
+            (require=True, type='str'),
 
             type_name=dict
-            (type='str', require=True),
+            (require=True, type='str'),
 
             index_rotation_period=dict
-            (default="NoRotation", type='str', require=False,
+            (require=False, type='str', default="OneDay",
              choices=['NoRotation', 'OneHour', 'OneDay', 'OneWeek', 'OneMonth']),
 
             buffering_second=dict
-            (default=300, type='int', require=False),
+            (require=False, type='int', default=300),
 
             buffering_mb=dict
-            (default=5, type='int', require=False),
+            (require=False, type='int', default=5),
 
             retry_second=dict
-            (default=300, type='int', require=False),
+            (require=False, type='int', default=300),
+
+            s3_backup_mode=dict
+            (require=False, type='str', default="FailedDocumentsOnly",
+             choices=['FailedDocumentsOnly', 'AllDocuments']),
 
             s3_bucket_arn=dict
-            (type='str', require=True),
+            (require=True, type='str'),
 
             s3_prefix=dict
-            (default="", type='str', require=False),
+            (require=False, type='str', default=""),
 
             s3_compression=dict
-            (default="UNCOMPRESSED", type='str', require=False,
+            (require=False, type='str', default="UNCOMPRESSED",
              choices=['UNCOMPRESSED', 'SNAPPY', 'ZIP', 'GZIP']),
         )
     )
@@ -101,7 +103,7 @@ def main():
     stream_type = module.params['stream_type']
     role_arn = module.params['role_arn']
     dest_arn = module.params['dest_arn']
-    backup_mode = module.params['backup_mode']
+    s3_backup_mode = module.params['s3_backup_mode']
     index_name = module.params['index_name']
     type_name = module.params['type_name']
     index_rotation_period = module.params['index_rotation_period']
@@ -173,7 +175,7 @@ def main():
         "RetryOptions": {
             "DurationInSeconds": retry_second
         },
-        "S3BackupMode": backup_mode,
+        "S3BackupMode": s3_backup_mode,
         "S3Configuration": desired_s3_config
     }
 
