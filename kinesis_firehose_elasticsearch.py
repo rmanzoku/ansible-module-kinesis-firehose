@@ -93,6 +93,13 @@ def main():
             s3_compression=dict
             (require=False, type='str', default="UNCOMPRESSED",
              choices=['UNCOMPRESSED', 'SNAPPY', 'ZIP', 'GZIP']),
+
+            s3_buffering_second=dict
+            (require=False, type='int', default=300),
+
+            s3_buffering_mb=dict
+            (require=False, type='int', default=5),
+
         )
     )
 
@@ -103,16 +110,18 @@ def main():
     stream_type = module.params['stream_type']
     role_arn = module.params['role_arn']
     dest_arn = module.params['dest_arn']
-    s3_backup_mode = module.params['s3_backup_mode']
     index_name = module.params['index_name']
     type_name = module.params['type_name']
     index_rotation_period = module.params['index_rotation_period']
     buffering_second = module.params['buffering_second']
     buffering_mb = module.params['buffering_mb']
     retry_second = module.params['retry_second']
+    s3_backup_mode = module.params['s3_backup_mode']
     s3_bucket_arn = module.params['s3_bucket_arn']
     s3_prefix = module.params['s3_prefix']
     s3_compression = module.params['s3_compression']
+    s3_buffering_second = module.params['s3_buffering_second']
+    s3_buffering_mb = module.params['s3_buffering_mb']
 
     changed = False
 
@@ -151,8 +160,8 @@ def main():
         "Prefix": s3_prefix,
         "CompressionFormat": s3_compression,
         "BufferingHints": {
-            "IntervalInSeconds": 300,
-            "SizeInMBs": 5
+            "IntervalInSeconds": s3_buffering_second,
+            "SizeInMBs": s3_buffering_mb
         },
         "CloudWatchLoggingOptions": {
             "Enabled": False
