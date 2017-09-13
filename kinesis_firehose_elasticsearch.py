@@ -212,10 +212,9 @@ def main():
     if current_config['S3BackupMode'] != desired_config['S3BackupMode']:
         module.fail_json(msg="You cannot modify S3BackupMode")
 
-    current_config['S3Update'] = current_config.pop('S3DestinationDescription')
-    desired_config['S3Update'] = desired_config.pop('S3Configuration')
-
     planned_config = copy.deepcopy(current_config)
+    planned_config['S3Update'] = planned_config.pop('S3DestinationDescription')
+    desired_config['S3Update'] = desired_config.pop('S3Configuration')
 
     for k in desired_config.keys():
             planned_config[k] = desired_config[k]
