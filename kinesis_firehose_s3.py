@@ -153,7 +153,7 @@ def main():
     current_config = current['DeliveryStreamDescription']['Destinations'][0]['ExtendedS3DestinationDescription']
 
     planned_config = copy.deepcopy(current_config)
-    planned_config['S3BackupUpdate'] = planned_config.pop('S3BackupDescription')
+    # planned_config['S3BackupUpdate'] = planned_config.pop('S3BackupDescription')
 
     for k in desired_config.keys():
             planned_config[k] = desired_config[k]
